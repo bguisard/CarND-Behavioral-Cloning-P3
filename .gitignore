@@ -1,0 +1,13 @@
+checkpoints
+data
+linux_sim
+old_models
+.ipynb_checkpoints
+*.h5
+*.swp
+*.p
+__pycache__
+*.csv
+*.ipynb
+README_old.md
+writeup_template.md

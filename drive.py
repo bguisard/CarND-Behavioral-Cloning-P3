@@ -16,6 +16,8 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
+import cv2
+
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -44,8 +46,16 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+set_speed = 12
 controller.set_desired(set_speed)
+
+
+def preprocess_image(image):
+
+    img = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    # img = cv2.resize(img, (64, 64), interpolation=cv2.INTER_AREA)
+
+    return img
 
 
 @sio.on('telemetry')
@@ -61,9 +71,26 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
-        steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
+        processed_img_array = preprocess_image(image_array)
+        steering_angle = float(model.predict(processed_img_array[None, :, :, :], batch_size=1))
 
-        throttle = controller.update(float(speed))
+        # throttle = controller.update(float(speed))
+
+        # method for variable speed
+
+        lo_speed = 10
+        mid_speed = 20
+        hi_speed = 30
+        if abs(steering_angle) < 0.1:
+            controller.set_desired(hi_speed)
+            throttle = controller.update(float(speed))
+        elif abs(steering_angle) > 0.1 and float(speed) > 15:
+            controller.set_desired(lo_speed)
+            throttle = controller.update(float(speed))
+            # throttle = 0.01
+        else:
+            controller.set_desired(mid_speed)
+            throttle = controller.update(float(speed))
 
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
