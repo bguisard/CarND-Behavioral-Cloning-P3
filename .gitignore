@@ -3,7 +3,6 @@ data
 linux_sim
 old_models
 .ipynb_checkpoints
-*.h5
 *.swp
 *.p
 __pycache__
